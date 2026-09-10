@@ -1,5 +1,7 @@
 # Ziyuan · 字源 — A Journey Through Chinese Character Etymology
 
+**中文版**: [README.md](README.md) · Chinese version
+
 ## Table of Contents
 
 - [Overview](#overview)

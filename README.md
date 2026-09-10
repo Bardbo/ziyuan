@@ -2,6 +2,8 @@
 
 > 纯前端汉字字源可视化网站。用七幕动态场景 + 一个字符画工具，把汉字当作可视化素材，重现汉字的「形」与「魂」。
 
+**English**: [README.en.md](README.en.md) · English version
+
 ---
 
 ## 目录
