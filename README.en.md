@@ -1,0 +1,144 @@
+# Ziyuan · 字源 — A Journey Through Chinese Character Etymology
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [The Seven Acts](#the-seven-acts)
+- [Character Art Tool](#character-art-tool)
+- [Quick Start](#quick-start)
+- [Project Structure](#project-structure)
+- [Design System](#design-system)
+- [Performance & Data](#performance--data)
+- [Quality Gate](#quality-gate)
+- [Known Notes](#known-notes)
+
+---
+
+<a id="overview"></a>
+## Overview
+
+**Ziyuan (字源)** is a client-side visualization of Chinese character etymology themed *"A Hundred Thousand Characters · A Journey to the Source"*. With no backend, it treats each character as a visual element — raining glyphs, particle swarms, star rivers, character mountains, bird flocks and scrolls — to evoke the form and spirit of Chinese writing. Click any character to read its etymology, glyph evolution and semantic evolution.
+
+<a id="features"></a>
+## Features
+
+- **Seven living acts**: Monkey Typing, Character Rain, Soul of Characters, Character Dome, Character Mountain, Character Birds, and Scroll.
+- **Bird flocking**: Reynolds three-rule (separation / alignment / cohesion) boids, with feed-the-birds and cursor-scatter interactions.
+- **Character Art tool**: turn an uploaded image/video into a stream of Chinese-character glyphs, preserving aspect ratio, with click-to-source and PNG export.
+- **Character detail**: tap any glyph to open a panel with Unicode, radical, stroke count, etymology type and three evolution stages.
+- **Night-ink design language**: deep ink ground, light ink text, cinnabar accents, ochre glow, plus film-grain and vignette atmosphere layers.
+- **Fluid interaction**: glassmorphic UI, cursor-following light, and semantic easing curves (from motion-pages).
+
+<a id="tech-stack"></a>
+## Tech Stack
+
+| Item | Detail |
+|---|---|
+| Build | Vite 6 (vanilla ESM, no UI framework) |
+| Render | Three.js (scene container) + native Canvas 2D |
+| Font | Alibaba PuHuiTi 3 (woff2, 29,197 glyphs) |
+| Data | 102,998-character index + 52 data chunks |
+| Quality gate | motion-pages `audit.mjs` (headless Chrome + design lint) |
+
+<a id="the-seven-acts"></a>
+## The Seven Acts
+
+| # | Act | Form | Interaction |
+|---|-----|------|-------------|
+| 0 | Monkey Typing | random glyphs "typed" by any key | any keyboard key |
+| 1 | Character Rain | glyphs fall like rain, ink-toned by depth | click to source / R for new |
+| 2 | Soul of Characters | particles converge into a giant glyph | ←→ browse / R random |
+| 3 | Character Dome | first-person flying galaxy (Shi Yun style) | WASD fly / drag to turn / wheel speed |
+| 4 | Character Mountain | glyph wave-wall + dynamic geese + moonlit reflection | R new scene / click to source |
+| 5 | Character Birds | flocking glyphs (Reynolds) | feed / cursor scatter / R new flock |
+| 6 | Scroll | characters unfold into prose on a scroll | R new text / click to source |
+
+<a id="character-art-tool"></a>
+## Character Art Tool
+
+Converts images/video into a stream of Chinese-character glyphs: brighter pixels → denser glyphs; ink color floats with brightness to stay visible; the grid uses a **contain-fit** aspect ratio so the original proportions are preserved; click a glyph on the canvas to open its etymology; PNG export supported.
+
+<a id="quick-start"></a>
+## Quick Start
+
+```bash
+npm install
+npm run dev        # dev server (default http://127.0.0.1:5173)
+npm run build      # production build to dist/
+npm run preview    # preview the build
+```
+
+Windows users can also double-click **`启动字源.bat`** to launch.
+
+<a id="project-structure"></a>
+## Project Structure
+
+```
+ziyuan/
+├── index.html              # entry (loading screen / atmosphere layers / UI)
+├── package.json
+├── vite.config.js
+├── 启动字源.bat
+├── public/
+│   ├── fonts/              # font (copied on build)
+│   └── data/               # runtime data (copied to dist/data)
+│       ├── index.json        # full index 102k entries / 5.2 MB
+│       ├── renderPool.json   # renderable pool 28k entries / 1.1 MB (first paint)
+│       ├── manifest.json     # chunk metadata
+│       ├── stats.json        # statistics
+│       └── chunks/           # 52 data chunks
+├── src/
+│   ├── main.js             # SceneDirector: load/events/switch/loop
+│   ├── style.css           # night-ink system + motion-pages language
+│   ├── core/               # 7 acts + DataLoader + InkBackground + GlyphCache
+│   ├── tools/              # CharacterArt tool
+│   └── ui/                 # DetailPanel
+└── scripts/
+    └── build-render-pool.js # generate renderPool.json from index.json
+```
+
+## Data Source
+
+All etymology data in `public/data/` is generated from a single 102,998-character analysis JSON (chars.json) by `preprocess.py`:
+
+- Each character has 11 fields (char / unicode / block / radical / strokes / pinyin / origin / glyph_evolution / meaning_evolution / etymology_type / notes)
+- Data was batch-generated by AI (Agnes free-tier model, 3-key parallelism + checkpoint resume + quality checks); ~90% of characters have complete valid etymology analysis, the rest are ultra-rare Extension B+ characters marked "待考" (unverified)
+- To regenerate the data: prepare chars.json and run `python preprocess.py`
+
+> ⚠️ **Disclaimer**: The etymology data is auto-generated by an AI model (Agnes) without expert proofreading. It may contain omissions or errors and is provided for reference only.
+
+<a id="design-system"></a>
+## Design System
+
+- **Semantic easing set**: `--e-out` (enter/hover), `--e-in` (leave), `--e-inout` (in-page), `--e-linear` (loop), `--e-signature` (act-dot activation).
+- **Fluid surface `.fluid`**: glass base + top rim light + idle sheen sweep + cursor-following light + hover lift glow + `:active{scale:.97}`.
+- **Atmosphere layers**: `#film-grain` (film grain) and `#vignette` (vignette) so the ground never reads as dead black.
+- **Cinnabar primary CTA**: search/download buttons use a cinnabar fill (a dark button on a dark ground is invisible).
+
+<a id="performance--data"></a>
+## Performance & Data
+
+- **First-paint pool**: `renderPool.json` (1.1 MB / 28k renderable chars) loads first; the full `index.json` (5.2 MB / 102k) loads silently in the background. First paint dropped from >15s to **≈1.5s**.
+- **On-demand chunks**: the 52 chunks load (cached via IndexedDB) only when a character is opened or a scene needs them.
+- **Background pre-render**: ink ground and paper texture are pre-rendered to offscreen canvases; only the moving layers redraw per frame.
+- **Static-data rule**: put data in `public/` and reference it as `/data/...` (Vite copies it on build; `/src/` paths break in production).
+
+<a id="quality-gate"></a>
+## Quality Gate
+
+A design review is run with motion-pages' `audit.mjs`:
+
+A design review is run with a local `audit.mjs` (from motion-pages) that drives headless Chrome: it covers AI-slop checks, motion grammar, technical (console errors / blank frames / contrast) and a11y. Current result: **desktop / tablet 0 warn · 0 fail; phone 0 fail**.
+
+<a id="known-notes"></a>
+## Known Notes
+
+- `vite build` may error while clearing `dist` on Windows (trash shim) → run `rm -rf dist` first.
+- Only ~28k glyphs are renderable (Alibaba PuHuiTi cmap); Extension B/C/D characters fall back to "待考" (unverified) or cannot render.
+- The bottom scene-switch dots are intentionally compact; their hit area is extended via `::after` without overlap. To fully clear the audit warn, enlarge the visual dots.
+
+---
+
+*字源 · Ziyuan — 十万汉字，溯源之旅。 / A hundred thousand characters, a journey to the source.*

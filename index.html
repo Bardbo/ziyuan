@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="字源 · 十万汉字的溯源之旅。以水墨夜色为底，用粒子、字雨、字鸟等七幕可视化重现汉字的形与魂。" />
+  <title>字源 · 汉字溯源之旅</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f0b08'/%3E%3Ctext x='16' y='23' font-size='22' text-anchor='middle' fill='%23e8c79a' font-family='serif'%3E%E5%AD%97%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+      <div class="loading-card">
+        <div class="loading-char">字</div>
+        <div class="loading-bar">
+          <div class="loading-progress" id="loading-progress"></div>
+        </div>
+        <div class="loading-text">字源加载中...</div>
+      </div>
+    </div>
+
+    <!-- Three.js Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Background ink canvas -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Atmosphere layers (motion-pages: 胶片颗粒 + 暗角) -->
+    <div id="film-grain"></div>
+    <div id="vignette"></div>
+
+    <!-- Header -->
+    <header id="header" class="enter d1">
+      <h1 class="site-title">字源</h1>
+      <div class="header-subtitle">十万汉字 · 溯源之旅</div>
+    </header>
+
+    <!-- Tools Launcher (single icon, click to open tool) -->
+    <div id="tools-launcher" class="enter d3">
+      <div class="tool-launch-icon fluid" data-tool="character-art" title="字符画工具">字</div>
+    </div>
+
+    <!-- Character Art Tool Page -->
+    <div id="tool-character-art" class="tool-page hidden">
+      <div class="tool-page-header">
+        <div class="tool-page-title">字符画 · Character Art</div>
+        <button class="tool-close-btn fluid" id="ca-close">✕</button>
+      </div>
+      <div class="tool-body">
+        <aside class="tool-sidebar">
+          <div class="tool-sidebar-label">字符字源</div>
+          <div class="tool-sidebar-hint">留空 = 字库按笔画采样；填入文字则用其构建（可粘贴整篇文章），每个字格从你填入的文字里随机抽取一个字。</div>
+          <textarea id="ca-text-input" class="ca-text-input" placeholder="粘贴文章或输入汉字…&#10;由淡到浓排列，淡处用前面的字"></textarea>
+        </aside>
+        <div class="tool-stage">
+          <div class="tool-canvas-wrap">
+            <canvas id="ca-canvas"></canvas>
+            <div class="ca-empty" id="ca-empty">上传 图片 / 视频，化作汉字字符流</div>
+            <div class="ca-status" id="ca-status" hidden>
+              <div class="ca-status-text" id="ca-status-text"></div>
+              <div class="ca-status-bar"><div class="ca-status-fill" id="ca-status-fill"></div></div>
+            </div>
+          </div>
+          <div class="tool-controls">
+            <label class="tool-btn-file fluid">
+              上传图片
+              <input type="file" id="ca-image-input" accept="image/*" hidden />
+            </label>
+            <label class="tool-btn-file fluid">
+              上传视频
+              <input type="file" id="ca-video-input" accept="video/*" hidden />
+            </label>
+            <div class="tool-ctrl-group">
+              <span class="tool-ctrl-label">密度</span>
+              <input type="range" id="ca-density" min="1" max="3" step="1" value="2" />
+            </div>
+            <div class="tool-ctrl-group">
+              <span class="tool-ctrl-label">风格</span>
+              <select id="ca-style">
+                <option value="hanzi" selected>汉字</option>
+                <option value="ascii">ASCII</option>
+              </select>
+            </div>
+            <div class="tool-ctrl-group" id="ca-video-controls" hidden>
+              <button class="tool-btn fluid" id="ca-play">⏸</button>
+            </div>
+            <div class="tool-ctrl-group">
+              <button class="tool-btn fluid" id="ca-download">下载图片</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div id="search-bar" class="enter d2">
+      <input type="text" id="search-input" placeholder="输入汉字…" maxlength="1" />
+      <button id="search-btn" class="fluid">溯源</button>
+    </div>
+
+    <!-- Scene HUD (act indicator & manual switcher) -->
+    <div id="scene-hud" class="enter d3">
+      <div class="act-dots fluid" id="act-dots">
+        <span class="act-dot active" data-act="0" title="猴子打字"></span>
+        <span class="act-dot" data-act="1" title="字雨"></span>
+        <span class="act-dot" data-act="2" title="字之魂"></span>
+        <span class="act-dot" data-act="3" title="字之穹"></span>
+        <span class="act-dot" data-act="4" title="字之山"></span>
+        <span class="act-dot" data-act="5" title="字鸟"></span>
+        <span class="act-dot" data-act="6" title="卷轴"></span>
+      </div>
+      <div class="act-title" id="act-title">字雨</div>
+      <div class="act-current-char" id="act-current-char"></div>
+      <div class="act-progress"><div class="act-progress-bar" id="act-progress-bar"></div></div>
+      <div class="act-hint" id="act-hint">点击下方圆点切换效果</div>
+    </div>
+
+    <!-- Stats overlay -->
+    <div id="stats-overlay">
+      <span id="stat-chars">0</span> 字
+    </div>
+
+    <!-- Transition overlay -->
+    <div id="transition-overlay"></div>
+
+    <!-- Detail Panel -->
+    <div id="detail-panel" class="hidden">
+      <div class="panel-inner">
+        <button id="panel-close" class="fluid">✕</button>
+        <div class="panel-char-header">
+          <span class="panel-char" id="panel-char">字</span>
+          <span class="panel-pinyin" id="panel-pinyin"></span>
+        </div>
+        <div class="panel-meta">
+          <div class="meta-item">
+            <span class="meta-label">Unicode</span>
+            <span class="meta-value" id="panel-unicode"></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">部首</span>
+            <span class="meta-value" id="panel-radical"></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">笔画</span>
+            <span class="meta-value" id="panel-strokes"></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">字源类型</span>
+            <span class="meta-value" id="panel-etymology-type"></span>
+          </div>
+        </div>
+        <div class="panel-section">
+          <h3>字源</h3>
+          <p id="panel-origin"></p>
+        </div>
+        <div class="panel-section">
+          <h3>字形演变</h3>
+          <p id="panel-glyph-evolution"></p>
+        </div>
+        <div class="panel-section">
+          <h3>字义演变</h3>
+          <p id="panel-meaning-evolution"></p>
+        </div>
+        <div class="panel-section">
+          <h3>备注</h3>
+          <p id="panel-notes"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

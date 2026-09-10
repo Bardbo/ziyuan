@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Data (regenerate via scripts)
+public/data/chunks/
+public/data/index.json
+public/data/manifest.json
+public/data/renderPool.json
+public/data/stats.json
+
+# Fonts (large, download separately)
+public/fonts/
+
+# Video assets (generated)
+说明视频/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Python
+__pycache__/
+*.pyc
