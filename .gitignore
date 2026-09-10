@@ -4,17 +4,7 @@ node_modules/
 # Build output
 dist/
 
-# Data (regenerate via scripts)
-public/data/chunks/
-public/data/index.json
-public/data/manifest.json
-public/data/renderPool.json
-public/data/stats.json
-
-# Fonts (large, download separately)
-public/fonts/
-
-# Video assets (generated)
+# Video assets (generated, keep local demo)
 说明视频/
 
 # OS / editor
